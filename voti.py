@@ -2,7 +2,7 @@ import json
 import os
 from datetime import datetime
 
-FILE_JSON = "exams_mine.json"
+FILE_JSON = "exams.json"
 
 
 def load_json():
@@ -10,7 +10,7 @@ def load_json():
     if os.path.exists(FILE_JSON):
         with open(FILE_JSON, "r") as file:
             return json.load(file)
-    return {"exams": [], "alpha": 1.0, "lodi": 0, "anni_fuori_corso": 0}
+    return {"exams": [], "alpha": 0, "lodi": 0, "anni_fuori_corso": 0}
 
 
 def save_json(dati):
@@ -39,8 +39,8 @@ def reset_exams():
 
 def add_exam():
     """ Add a new exam to the list """
-    dati = load_json()
-    to_do = [e for e in dati["exams"] if e["grade"] == 0]
+    data = load_json()
+    to_do = [e for e in data["exams"] if e["grade"] == 0]
 
     if not to_do:
         print("[!] Non ci sono esami disponibili per essere aggiunti.")
@@ -48,7 +48,7 @@ def add_exam():
 
     print("[*] Esami da aggiungere:")
     for i, esame in enumerate(to_do, 1):
-        print(f"     {i}) {esame['nome']} ({esame['CFU']} CFU)")
+        print(f"     {i}) {esame["name"]} ({esame["CFU"]} CFU)")
     print()
 
     choice = int(input("[+] Seleziona l'esame da aggiornare (numero): ")) - 1
@@ -58,16 +58,36 @@ def add_exam():
 
     print("\n- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n")
 
-    print(f"[*] Esame selezionato: {to_do[choice]['nome'].upper()} - CFU {to_do[choice]['CFU']}")
-    voto = int(input(f"    Voto: "))
-    data = input("    Data (DD-MM-YYYY): ")
+    print(f"[*] Esame selezionato: {to_do[choice]["name"].upper()} - CFU {to_do[choice]["CFU"]}")
+    while True:
+        grade = input(f"    Voto: ").strip().upper()
+        if grade == "30L":
+            grade = 31
+            break
+        else:
+            grade = int(grade)
+            if 18 <= grade <= 31:
+                break
+            else:
+                print("     > Il voto deve essere compreso tra 18 e 31.\n")
 
-    dati["exams"][dati["exams"].index(to_do[choice])]["grade"] = voto
-    dati["exams"][dati["exams"].index(to_do[choice])]["date"] = data
+    while True:
+        date = input("    Data (DD-MM-YYYY): ")
+        if date:
+            try:
+                datetime.strptime(date, "%d-%m-%Y")
+                break
+            except ValueError:
+                print("     > Data non valida. Riprova.\n")
+        else:
+            break
 
-    save_json(dati)
+    data["exams"][data["exams"].index(to_do[choice])]["grade"] = grade
+    data["exams"][data["exams"].index(to_do[choice])]["date"] = date
 
-    print(f"[*] Esame aggiornato: {to_do[choice]['nome']} - Voto {voto}")
+    save_json(data)
+
+    print(f"[*] Esame aggiornato: {to_do[choice]['name']} - Voto {grade}")
 
 
 def remove_exam():
@@ -77,7 +97,7 @@ def remove_exam():
 
     print("[*] Esami disponibili:")
     for i, esame in enumerate(done, 1):
-        print(f"     {i}) {esame['nome']} - Voto {esame['voto']} - CFU {esame['CFU']}")
+        print(f"     {i}) {esame['name']} - Voto {esame['voto']} - CFU {esame['CFU']}")
     print()
 
     s = int(input("[+] Seleziona l'esame da rimuovere (numero): ")) - 1
@@ -127,9 +147,9 @@ def voto_partenza(data=None):
     lodi = data["exams"].count(31)
     gamma = 0.01 if lodi >= 2 else 0.005 if lodi == 1 else 0.0
 
-    if data["fuori_corso"] > 1:
+    if data["anni_fuori_corso"] > 1:
         delta = 0
-    elif data["fuori_corso"] == 1:
+    elif data["anni_fuori_corso"] == 1:
         delta = 0.005
     else:
         delta = 0.01
@@ -154,7 +174,7 @@ def simulate_exam():
     grade = int(input("[+] Inserisci voto esame: "))
     cfu = int(input("[+] Inserisci CFU esame: "))
     simulated_data = {
-        **data, "exams": data["exams"] + [{"nome": "Simulazione", "grade": grade, "CFU": cfu, "date": None}]
+        **data, "exams": data["exams"] + [{"name": "Simulazione", "grade": grade, "CFU": cfu, "date": None}]
     }
 
     voto_partenza(simulated_data)
@@ -162,6 +182,13 @@ def simulate_exam():
 
 if __name__ == "__main__":
     while True:
+        if not os.path.exists(FILE_JSON):
+            print("[!] File JSON non trovato. Creazione di 'exams.json' dal template.")
+            with open("template_exams.json", "r") as file:
+                with open(FILE_JSON, "w") as new_file:
+                    new_file.write(file.read())
+
+
         print("\n- - - - - - - - - - Gestione Voto di Laurea - - - - - - - - - -")
         print("1) Aggiungi esame")
         print("2) Rimuovi esame")
