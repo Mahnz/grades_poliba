@@ -1,0 +1,13 @@
+{
+    "exams": [
+        {
+            "name": "test",
+            "grade": 0,
+            "CFU": 6,
+            "date": null
+        }
+    ],
+    "fuori_corso": 0,
+    "cfu_off" : 9,
+    "alpha" : 0
+}
