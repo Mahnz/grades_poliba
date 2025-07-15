@@ -270,7 +270,7 @@ def starting_grade(data):
     avg_110 = (avg * 110) / 30
     avg_filtered_110 = (avg_filtered * 110) / 30
 
-    alpha = int(data.get("alpha"))
+    alpha = float(data.get("alpha"))
 
     lodi = data["exams"].count(31)
     gamma = 0.01 if lodi >= 2 else 0.005 if lodi == 1 else 0.0
